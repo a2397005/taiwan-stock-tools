@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台股工具箱</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+  :root{
+    --bg:#0b0d10; --panel:#14171b; --panel-2:#1b1f24; --line:#262b31;
+    --ink:#e8e9eb; --ink-dim:#8b939d;
+    --up:#ff4d4d; --down:#33c17b; --amber:#f0b429;
+    --font-display:'Space Grotesk','Noto Sans TC',sans-serif;
+    --font-body:'Noto Sans TC',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:640px; margin:0 auto; padding:16px 16px 60px;}
+
+  .sitebar{display:flex; align-items:center; justify-content:space-between; padding:10px 0 16px;}
+  .brand{font-family:var(--font-display); font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px;}
+  .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--amber);}
+
+  nav.tabs{display:flex; gap:6px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:4px; margin-bottom:22px;}
+  nav.tabs a{
+    flex:1; text-align:center; text-decoration:none; color:var(--ink-dim);
+    padding:11px 8px; border-radius:7px; font-size:13.5px; font-weight:500;
+  }
+  nav.tabs a.active{background:var(--amber); color:#1a1300; font-weight:700;}
+
+  .page{display:none;}
+  .page.active{display:block;}
+
+  header.page-head{padding:0 0 18px;}
+  .eyebrow{font-family:var(--font-mono); font-size:11px; letter-spacing:.18em; color:var(--amber); text-transform:uppercase;}
+  h1{font-family:var(--font-display); font-weight:700; font-size:24px; margin:6px 0 4px; letter-spacing:-0.01em;}
+  header.page-head p{color:var(--ink-dim); font-size:13px; margin:0;}
+
+  .search-row{display:flex; gap:8px; margin-bottom:6px;}
+  input[type=text], input[type=number]{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--ink);
+    padding:12px 13px; border-radius:8px; font-size:16px; font-family:var(--font-mono);
+  }
+  input[type=text]{flex:1;}
+  input[type=text]:focus, input[type=number]:focus{outline:2px solid var(--amber); outline-offset:-1px;}
+  button.primary{
+    background:var(--amber); color:#1a1300; border:none; border-radius:8px;
+    padding:0 22px; font-size:15px; font-weight:700; font-family:var(--font-body); cursor:pointer;
+  }
+  button.primary:active{transform:translateY(1px);}
+  button.primary:disabled{opacity:.5;}
+  .hint{font-size:12px; color:var(--ink-dim); margin-bottom:24px;}
+  .chip{background:var(--panel-2); color:var(--ink-dim); border:1px solid var(--line); padding:3px 10px; border-radius:100px; font-size:12px; font-weight:500; margin-right:6px; margin-top:6px; cursor:pointer;}
+
+  .status{font-size:13px; color:var(--ink-dim); padding:20px 0; text-align:center;}
+
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:14px;}
+  .card h2{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-dim); margin:0 0 12px; display:flex; align-items:center; gap:8px;
+  }
+  .card h2::after{content:''; flex:1; height:1px; background:var(--line);}
+
+  .price-hero{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;}
+  .price-hero .px{font-family:var(--font-mono); font-size:38px; font-weight:700; line-height:1;}
+  .price-hero .delta{font-family:var(--font-mono); font-size:16px; font-weight:500;}
+  .price-hero .name{font-family:var(--font-display); font-size:17px; font-weight:700; width:100%;}
+  .up{color:var(--up);} .down{color:var(--down);} .flat{color:var(--ink-dim);}
+
+  .grid4{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px;}
+  .stat{background:var(--panel-2); border-radius:8px; padding:10px 12px;}
+  .stat .lbl{font-size:11px; color:var(--ink-dim); margin-bottom:3px;}
+  .stat .val{font-family:var(--font-mono); font-size:15px; font-weight:500;}
+
+  .kv{display:flex; padding:7px 0; border-bottom:1px solid var(--line); font-size:13.5px; gap:12px; justify-content:space-between;}
+  .kv:last-child{border-bottom:none;}
+  .kv .k{color:var(--ink-dim); flex-shrink:0;}
+  .kv .v{font-family:var(--font-mono); font-weight:500; text-align:right;}
+  .kv.total .v{font-size:15px; font-weight:700;}
+
+  .revenue-bars{display:flex; align-items:flex-end; gap:4px; height:90px; margin-top:8px;}
+  .revenue-bars .bar{flex:1; background:var(--amber); border-radius:3px 3px 0 0; min-height:2px; position:relative;}
+  .revenue-bars .bar span{position:absolute; bottom:-18px; left:0; right:0; text-align:center; font-size:9px; color:var(--ink-dim); font-family:var(--font-mono);}
+
+  .news-item{padding:10px 0; border-bottom:1px solid var(--line); font-size:13.5px;}
+  .news-item:last-child{border-bottom:none;}
+  .news-item .date{font-family:var(--font-mono); font-size:11px; color:var(--amber); margin-bottom:3px;}
+
+  .linkrow{display:flex; flex-wrap:wrap; gap:8px;}
+  .linkrow a{font-size:12.5px; background:var(--panel-2); border:1px solid var(--line); color:var(--ink); padding:7px 12px; border-radius:100px; text-decoration:none;}
+  .linkrow a:hover{border-color:var(--amber); color:var(--amber);}
+
+  .disclaim{font-size:11.5px; color:var(--ink-dim); line-height:1.6; margin-top:10px;}
+  .unavailable{font-size:13px; color:var(--ink-dim); font-style:italic; padding:4px 0 10px;}
+
+  /* calculator specific */
+  .mode-toggle{display:flex; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:4px; margin-bottom:18px;}
+  .mode-toggle button{flex:1; background:transparent; border:none; color:var(--ink-dim); padding:11px 8px; border-radius:7px; font-size:13.5px; font-weight:500; font-family:var(--font-body); cursor:pointer;}
+  .mode-toggle button.active{background:var(--amber); color:#1a1300; font-weight:700;}
+  label{display:block; font-size:13px; color:var(--ink-dim); margin-bottom:6px;}
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  input[type=number]{width:100%;}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .fee-row{display:flex; align-items:center; justify-content:space-between; padding:10px 0;}
+  .fee-row:not(:last-child){border-bottom:1px solid var(--line);}
+  .fee-row .label{font-size:13.5px;}
+  .fee-row .sub{font-size:11.5px; color:var(--ink-dim); margin-top:2px;}
+  .switch{position:relative; width:42px; height:24px; flex-shrink:0;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:var(--panel-2); border:1px solid var(--line); border-radius:100px; cursor:pointer; transition:.15s;}
+  .slider::before{content:''; position:absolute; width:16px; height:16px; left:3px; top:2px; background:var(--ink-dim); border-radius:50%; transition:.15s;}
+  .switch input:checked + .slider{background:var(--amber); border-color:var(--amber);}
+  .switch input:checked + .slider::before{transform:translateX(18px); background:#1a1300;}
+  .rate-input{display:flex; align-items:center; gap:6px; margin-top:8px;}
+  .rate-input input{width:90px; padding:8px 10px; font-size:13.5px;}
+  .rate-input span{font-size:12.5px; color:var(--ink-dim);}
+  .calc-btn{width:100%; background:var(--amber); color:#1a1300; border:none; border-radius:10px; padding:14px; font-size:15.5px; font-weight:700; cursor:pointer; margin-top:4px;}
+  .result-hero{text-align:center; padding:6px 0 18px;}
+  .result-hero .lbl{font-size:12px; color:var(--ink-dim); margin-bottom:6px;}
+  .result-hero .num{font-family:var(--font-mono); font-size:34px; font-weight:700;}
+  .result-hero .pct{font-family:var(--font-mono); font-size:15px; margin-top:4px;}
+
+  footer{text-align:center; color:var(--ink-dim); font-size:11px; margin-top:26px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="sitebar">
+    <div class="brand"><span class="dot"></span>台股工具箱</div>
+  </div>
+
+  <nav class="tabs">
+    <a href="#lookup" id="navLookup">股票查詢</a>
+    <a href="#calculator" id="navCalculator">損益計算機</a>
+  </nav>
+
+  <!-- ============ PAGE 1：股票查詢 ============ -->
+  <div class="page" id="page-lookup">
+    <header class="page-head">
+      <div class="eyebrow">TWSE / TPEx</div>
+      <h1>輸入股票代號，查完整面貌</h1>
+      <p>即時股價、公司資料、月營收、財報數字 — 直接串接證交所公開資料</p>
+    </header>
+
+    <div class="search-row">
+      <input type="text" id="codeInput" placeholder="例如 2330" inputmode="numeric" maxlength="6">
+      <button class="primary" id="searchBtn">查詢</button>
+    </div>
+    <div class="hint">
+      快速查詢：
+      <span class="chip" data-code="2330">2330 台積電</span>
+      <span class="chip" data-code="2317">2317 鴻海</span>
+      <span class="chip" data-code="2454">2454 聯發科</span>
+      <span class="chip" data-code="0050">0050 元大台灣50</span>
+    </div>
+
+    <div id="lookupResults" style="display:none;">
+      <section class="card"><h2>即時股價</h2><div id="priceBody"></div></section>
+      <section class="card"><h2>公司概況 / 主要業務</h2><div id="profileBody"></div></section>
+      <section class="card"><h2>近期月營收（千元）</h2><div id="revenueBody"></div></section>
+      <section class="card"><h2>財務數字</h2><div id="financeBody"></div></section>
+      <section class="card"><h2>重大訊息 / 相關新聞</h2><div id="newsBody"></div></section>
+      <section class="card">
+        <h2>合作對象</h2>
+        <div class="unavailable">沒有公開 API 能自動判斷合作夥伴關係，以下連結可手動查證：</div>
+        <div class="linkrow" id="partnerLinks"></div>
+      </section>
+    </div>
+    <footer>資料來源：台灣證券交易所 OpenAPI・公開資訊觀測站。股價可能有delay，僅供參考，不構成投資建議。</footer>
+  </div>
+
+  <!-- ============ PAGE 2：損益計算機 ============ -->
+  <div class="page" id="page-calculator">
+    <header class="page-head">
+      <div class="eyebrow">股票交易試算</div>
+      <h1>買賣價格損益計算機</h1>
+      <p>輸入股數與兩筆金額，自動算出損益、報酬率、手續費與證交稅</p>
+    </header>
+
+    <div class="mode-toggle">
+      <button id="modeBuySell" class="active">買進 → 賣出</button>
+      <button id="modeSellSell">賣出 → 賣出</button>
+    </div>
+
+    <div class="card">
+      <h2 id="inputHeading">輸入資料</h2>
+      <div class="field">
+        <label>股數</label>
+        <input type="number" id="shares" placeholder="例如 1000" min="0" step="1">
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label id="amt1Label">買進金額（總額）</label>
+          <input type="number" id="amt1" placeholder="0" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label id="amt2Label">賣出金額（總額）</label>
+          <input type="number" id="amt2" placeholder="0" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="disclaim">金額請填「總額」（股數 × 單價），不是每股價格。</div>
+    </div>
+
+    <div class="card">
+      <h2>計算手續費 / 稅</h2>
+      <div class="fee-row">
+        <div><div class="label">計算手續費</div><div class="sub">買、賣兩邊各收一次</div></div>
+        <label class="switch"><input type="checkbox" id="feeToggle" checked><span class="slider"></span></label>
+      </div>
+      <div class="rate-input" id="feeRateRow">
+        <input type="number" id="feeRate" value="0.1425" step="0.0001" min="0">
+        <span>% 手續費率　最低</span>
+        <input type="number" id="feeMin" value="20" step="1" min="0">
+        <span>元／筆</span>
+      </div>
+      <div class="fee-row" style="margin-top:14px;">
+        <div><div class="label">計算證交稅</div><div class="sub">法定稅金，僅在「賣出」時收取</div></div>
+        <label class="switch"><input type="checkbox" id="taxToggle" checked><span class="slider"></span></label>
+      </div>
+      <div class="rate-input" id="taxRateRow">
+        <input type="number" id="taxRate" value="0.3" step="0.01" min="0">
+        <span>% 證交稅率（一般股票 0.3%，ETF 通常 0.1%）</span>
+      </div>
+    </div>
+
+    <button class="calc-btn" id="calcBtn">計算結果</button>
+
+    <div class="card" id="resultCard" style="display:none; margin-top:14px;">
+      <h2>計算結果</h2>
+      <div class="result-hero">
+        <div class="lbl" id="resultLabel">損益</div>
+        <div class="num" id="resultNum">—</div>
+        <div class="pct" id="resultPct"></div>
+      </div>
+      <div class="kv"><div class="k" id="grossLabel">價差（未扣費用）</div><div class="v" id="grossVal">—</div></div>
+      <div class="kv"><div class="k">手續費合計</div><div class="v" id="feeVal">—</div></div>
+      <div class="kv"><div class="k">證交稅合計</div><div class="v" id="taxVal">—</div></div>
+      <div class="kv total"><div class="k" id="netLabel">淨損益</div><div class="v" id="netVal">—</div></div>
+    </div>
+    <footer>稅費率僅供試算參考，實際手續費依券商牌告與折扣為準。</footer>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- 分頁切換（用網址 hash 當連結） ---------------- */
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav.tabs a').forEach(a => a.classList.remove('active'));
+  if(name === 'calculator'){
+    $('page-calculator').classList.add('active');
+    $('navCalculator').classList.add('active');
+  } else {
+    $('page-lookup').classList.add('active');
+    $('navLookup').classList.add('active');
+  }
+}
+function routeFromHash(){
+  const h = location.hash.replace('#','');
+  showPage(h === 'calculator' ? 'calculator' : 'lookup');
+}
+window.addEventListener('hashchange', routeFromHash);
+routeFromHash();
+
+/* ================= PAGE 1：股票查詢 ================= */
+const TWSE_BASE = 'https://openapi.twse.com.tw/v1';
+
+function fmtNum(n){
+  if(n === undefined || n === null || n === '') return '—';
+  const num = typeof n === 'string' ? parseFloat(n.replace(/,/g,'')) : n;
+  if(isNaN(num)) return n;
+  return num.toLocaleString('zh-TW');
+}
+async function fetchJSON(url){
+  const res = await fetch(url, {headers:{'Accept':'application/json'}});
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function loadPrice(code){
+  const el = $('priceBody');
+  el.innerHTML = '<div class="status">讀取中…</div>';
+  const tryFetch = async (prefix) => {
+    const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${prefix}_${code}.tw&json=1&delay=0&_=${Date.now()}`;
+    const data = await fetchJSON(url);
+    return (data.msgArray && data.msgArray[0]) || null;
+  };
+  try{
+    let row = null;
+    try{ row = await tryFetch('tse'); }catch(e){}
+    if(!row){ try{ row = await tryFetch('otc'); }catch(e){} }
+    if(!row || !row.z || row.z === '-') throw new Error('no-live-price');
+
+    const price = parseFloat(row.z);
+    const prevClose = parseFloat(row.y);
+    const diff = price - prevClose;
+    const pct = prevClose ? (diff/prevClose*100) : 0;
+    const dirClass = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
+    const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '—';
+    el.innerHTML = `
+      <div class="price-hero">
+        <div class="name">${row.n || code}（${code}）</div>
+        <div class="px ${dirClass}">${price.toFixed(2)}</div>
+        <div class="delta ${dirClass}">${arrow} ${Math.abs(diff).toFixed(2)}　${pct.toFixed(2)}%</div>
+      </div>
+      <div class="grid4">
+        <div class="stat"><div class="lbl">開盤</div><div class="val">${row.o || '—'}</div></div>
+        <div class="stat"><div class="lbl">最高</div><div class="val">${row.h || '—'}</div></div>
+        <div class="stat"><div class="lbl">最低</div><div class="val">${row.l || '—'}</div></div>
+        <div class="stat"><div class="lbl">昨收</div><div class="val">${row.y || '—'}</div></div>
+        <div class="stat"><div class="lbl">成交量(張)</div><div class="val">${row.v ? fmtNum(row.v) : '—'}</div></div>
+        <div class="stat"><div class="lbl">更新時間</div><div class="val">${row.t || '—'}</div></div>
+      </div>
+      <div class="disclaim">來源：證交所基本市況報導網站，約 5 秒更新一次，非逐筆Tick資料。</div>
+    `;
+  }catch(e){
+    el.innerHTML = `
+      <div class="unavailable">瀏覽器端無法直接讀到即時報價（可能是行情站的跨網域限制），可直接看官方頁面：</div>
+      <div class="linkrow">
+        <a href="https://mis.twse.com.tw/stock/index.jsp?ch=${code}.tw" target="_blank" rel="noopener">證交所即時行情 ↗</a>
+        <a href="https://tw.stock.yahoo.com/quote/${code}" target="_blank" rel="noopener">Yahoo奇摩股市 ↗</a>
+      </div>
+      <div class="disclaim">若要在自己伺服器上穩定拿到即時價，建議走券商 API（如富果 Fugle）或後端代理轉發。</div>
+    `;
+  }
+}
+
+async function loadProfile(code){
+  const el = $('profileBody');
+  el.innerHTML = '<div class="status">讀取中…</div>';
+  try{
+    const data = await fetchJSON(`${TWSE_BASE}/opendata/t187ap03_L`);
+    const row = data.find(d => d['公司代號'] === code);
+    if(!row) throw new Error('not found');
+    const rows = [
+      ['公司名稱', row['公司名稱']], ['產業別', row['產業別']],
+      ['主要經營業務', row['主要經營業務']], ['成立日期', row['成立日期']],
+      ['上市日期', row['上市日期']], ['實收資本額(元)', fmtNum(row['實收資本額'])],
+      ['董事長', row['董事長']], ['總經理', row['總經理']], ['公司網址', row['公司網址']],
+    ].filter(([,v]) => v);
+    el.innerHTML = rows.map(([k,v]) => `<div class="kv"><div class="k">${k}</div><div class="v" style="text-align:right; font-family:var(--font-body); font-weight:400;">${
+      k==='公司網址' && v ? `<a href="${v.startsWith('http')?v:'https://'+v}" target="_blank" rel="noopener" style="color:var(--amber)">${v}</a>` : v
+    }</div></div>`).join('');
+  }catch(e){
+    el.innerHTML = `<div class="unavailable">查無此代號的上市公司基本資料（可能是上櫃股票），可到 <a href="https://mopsov.twse.com.tw/mops/web/index" target="_blank" rel="noopener" style="color:var(--amber)">公開資訊觀測站</a> 查詢。</div>`;
+  }
+}
+
+async function loadRevenue(code){
+  const el = $('revenueBody');
+  el.innerHTML = '<div class="status">讀取中…</div>';
+  try{
+    const data = await fetchJSON(`${TWSE_BASE}/opendata/t187ap05_L`);
+    const rows = data.filter(d => d['公司代號'] === code);
+    if(!rows.length) throw new Error('not found');
+    rows.sort((a,b) => (a['資料年月']||'').localeCompare(b['資料年月']||''));
+    const recent = rows.slice(-6);
+    const vals = recent.map(r => parseFloat((r['營業收入-當月營收']||'0').toString().replace(/,/g,'')) || 0);
+    const max = Math.max(...vals, 1);
+    const bars = recent.map((r,i) => {
+      const h = Math.max(4, Math.round(vals[i]/max*72));
+      const ym = (r['資料年月']||'').toString();
+      const label = ym.length >= 5 ? `${ym.slice(0,-2)}/${ym.slice(-2)}` : ym;
+      return `<div class="bar" style="height:${h}px;" title="${fmtNum(vals[i])}"><span>${label}</span></div>`;
+    }).join('');
+    const latest = recent[recent.length-1];
+    el.innerHTML = `
+      <div class="grid4">
+        <div class="stat"><div class="lbl">最新月營收</div><div class="val">${fmtNum(latest['營業收入-當月營收'])}</div></div>
+        <div class="stat"><div class="lbl">去年同月增減(%)</div><div class="val">${latest['營業收入-去年同月增減(%)'] || '—'}</div></div>
+      </div>
+      <div class="revenue-bars" style="margin-top:22px; margin-bottom:14px;">${bars}</div>
+    `;
+  }catch(e){
+    el.innerHTML = `<div class="unavailable">查無月營收資料（可能非上市公司，或當期資料尚未公告）。</div>`;
+  }
+}
+
+async function loadFinance(code){
+  const el = $('financeBody');
+  el.innerHTML = '<div class="status">讀取中…</div>';
+  try{
+    const [income, balance] = await Promise.allSettled([
+      fetchJSON(`${TWSE_BASE}/opendata/t187ap06_L_ci`),
+      fetchJSON(`${TWSE_BASE}/opendata/t187ap07_L_ci`),
+    ]);
+    let html = '';
+    if(income.status === 'fulfilled'){
+      const row = income.value.find(d => d['公司代號'] === code);
+      if(row){
+        html += `<div class="kv"><div class="k">營業收入</div><div class="v">${fmtNum(row['營業收入'])}</div></div>`;
+        html += `<div class="kv"><div class="k">營業利益</div><div class="v">${fmtNum(row['營業利益（損失）'] ?? row['營業利益'])}</div></div>`;
+        html += `<div class="kv"><div class="k">本期淨利（損）</div><div class="v">${fmtNum(row['本期淨利（淨損）'] ?? row['本期淨利'])}</div></div>`;
+        html += `<div class="kv"><div class="k">每股盈餘(EPS)</div><div class="v">${row['基本每股盈餘（元）'] || row['基本每股盈餘'] || '—'}</div></div>`;
+      }
+    }
+    if(balance.status === 'fulfilled'){
+      const row = balance.value.find(d => d['公司代號'] === code);
+      if(row){
+        html += `<div class="kv"><div class="k">資產總額</div><div class="v">${fmtNum(row['資產總額'])}</div></div>`;
+        html += `<div class="kv"><div class="k">負債總額</div><div class="v">${fmtNum(row['負債總額'])}</div></div>`;
+        html += `<div class="kv"><div class="k">權益總額</div><div class="v">${fmtNum(row['權益總額'])}</div></div>`;
+      }
+    }
+    if(!html) throw new Error('empty');
+    el.innerHTML = html + `<div class="disclaim">來源：證交所公開財報彙總（一般業季報），金融保險業與其他特殊產業欄位不同，可能無法對應顯示。</div>`;
+  }catch(e){
+    el.innerHTML = `<div class="unavailable">查無這支股票的季報彙總數字，可到 <a href="https://mops.twse.com.tw/mops/web/t51sb01_q1" target="_blank" rel="noopener" style="color:var(--amber)">公開資訊觀測站財報查詢</a> 手動查。</div>`;
+  }
+}
+
+async function loadNews(code, companyName){
+  const el = $('newsBody');
+  el.innerHTML = '<div class="status">讀取中…</div>';
+  let officialHtml = '';
+  try{
+    const data = await fetchJSON(`${TWSE_BASE}/opendata/t187ap04_L`);
+    const rows = data.filter(d => d['公司代號'] === code).slice(0, 6);
+    if(rows.length){
+      officialHtml = rows.map(r => `
+        <div class="news-item">
+          <div class="date">${r['發言日期'] || ''}</div>
+          <div>${r['主旨'] || r['事實發生日'] || ''}</div>
+        </div>
+      `).join('');
+    }
+  }catch(e){}
+  const q = encodeURIComponent(companyName || code);
+  const searchLinks = `
+    <div class="linkrow" style="margin-top:${officialHtml?'10px':'0'};">
+      <a href="https://news.google.com/search?q=${q}&hl=zh-TW&gl=TW" target="_blank" rel="noopener">Google 新聞搜尋 ↗</a>
+      <a href="https://www.cnyes.com/search/news?keyword=${q}" target="_blank" rel="noopener">鉅亨網搜尋 ↗</a>
+      <a href="https://tw.stock.yahoo.com/q/h?s=${code}" target="_blank" rel="noopener">Yahoo股市新聞 ↗</a>
+    </div>
+  `;
+  el.innerHTML = (officialHtml || '<div class="unavailable">近期無公告的重大訊息。</div>') + searchLinks;
+}
+
+function loadPartnerLinks(code, companyName){
+  const q = encodeURIComponent(companyName || code);
+  $('partnerLinks').innerHTML = `
+    <a href="https://mopsov.twse.com.tw/mops/web/index" target="_blank" rel="noopener">公開資訊觀測站 ↗</a>
+    <a href="https://news.google.com/search?q=${q}%20合作&hl=zh-TW&gl=TW" target="_blank" rel="noopener">「${companyName||code} 合作」新聞 ↗</a>
+    <a href="https://www.google.com/search?q=${q}+%E4%BE%9B%E6%87%89%E9%8F%88+OR+%E5%AE%A2%E6%88%B6" target="_blank" rel="noopener">供應鏈／客戶 搜尋 ↗</a>
+  `;
+}
+
+async function runSearch(){
+  const code = $('codeInput').value.trim();
+  if(!code) return;
+  $('lookupResults').style.display = 'block';
+  $('searchBtn').disabled = true;
+  await loadPrice(code);
+  let companyName = code;
+  try{
+    const data = await fetchJSON(`${TWSE_BASE}/opendata/t187ap03_L`);
+    const row = data.find(d => d['公司代號'] === code);
+    if(row) companyName = row['公司名稱'];
+  }catch(e){}
+  await Promise.all([loadProfile(code), loadRevenue(code), loadFinance(code), loadNews(code, companyName)]);
+  loadPartnerLinks(code, companyName);
+  $('searchBtn').disabled = false;
+}
+$('searchBtn').addEventListener('click', runSearch);
+$('codeInput').addEventListener('keydown', e => { if(e.key === 'Enter') runSearch(); });
+document.querySelectorAll('.chip').forEach(btn => {
+  btn.addEventListener('click', () => { $('codeInput').value = btn.dataset.code; runSearch(); });
+});
+
+/* ================= PAGE 2：損益計算機 ================= */
+let calcMode = 'buysell';
+function setCalcMode(m){
+  calcMode = m;
+  $('modeBuySell').classList.toggle('active', m === 'buysell');
+  $('modeSellSell').classList.toggle('active', m === 'sellsell');
+  if(m === 'buysell'){
+    $('inputHeading').textContent = '輸入資料（買進 → 賣出）';
+    $('amt1Label').textContent = '買進金額（總額）';
+    $('amt2Label').textContent = '賣出金額（總額）';
+  } else {
+    $('inputHeading').textContent = '輸入資料（兩筆賣出）';
+    $('amt1Label').textContent = '賣出金額一（總額）';
+    $('amt2Label').textContent = '賣出金額二（總額）';
+  }
+  $('resultCard').style.display = 'none';
+}
+$('modeBuySell').addEventListener('click', () => setCalcMode('buysell'));
+$('modeSellSell').addEventListener('click', () => setCalcMode('sellsell'));
+$('feeToggle').addEventListener('change', e => {
+  $('feeRateRow').style.opacity = e.target.checked ? '1' : '.35';
+  $('feeRateRow').style.pointerEvents = e.target.checked ? 'auto' : 'none';
+});
+$('taxToggle').addEventListener('change', e => {
+  $('taxRateRow').style.opacity = e.target.checked ? '1' : '.35';
+  $('taxRateRow').style.pointerEvents = e.target.checked ? 'auto' : 'none';
+});
+function calcFee(amount, on){
+  if(!on || !amount) return 0;
+  const rate = parseFloat($('feeRate').value) || 0;
+  const min = parseFloat($('feeMin').value) || 0;
+  return Math.max(amount * rate / 100, amount > 0 ? min : 0);
+}
+function calcTax(amount, on){
+  if(!on || !amount) return 0;
+  return amount * (parseFloat($('taxRate').value) || 0) / 100;
+}
+function fmt(n){ return n.toLocaleString('zh-TW', {maximumFractionDigits:0}); }
+
+$('calcBtn').addEventListener('click', () => {
+  const amt1 = parseFloat($('amt1').value) || 0;
+  const amt2 = parseFloat($('amt2').value) || 0;
+  const feeOn = $('feeToggle').checked;
+  const taxOn = $('taxToggle').checked;
+  let fee1, fee2, tax1, tax2, gross, netLabel, resultLabel, grossLabel;
+
+  if(calcMode === 'buysell'){
+    fee1 = calcFee(amt1, feeOn); fee2 = calcFee(amt2, feeOn);
+    tax1 = 0; tax2 = calcTax(amt2, taxOn);
+    gross = amt2 - amt1;
+    grossLabel = '價差（賣出－買進，未扣費用）';
+    resultLabel = '損益';
+    netLabel = '淨損益（已扣手續費／證交稅）';
+  } else {
+    fee1 = calcFee(amt1, feeOn); fee2 = calcFee(amt2, feeOn);
+    tax1 = calcTax(amt1, taxOn); tax2 = calcTax(amt2, taxOn);
+    gross = amt2 - amt1;
+    grossLabel = '金額差（賣出二－賣出一，未扣費用）';
+    resultLabel = '淨額差';
+    netLabel = '淨額差（已扣兩筆手續費／證交稅）';
+  }
+
+  const totalFee = fee1 + fee2;
+  const totalTax = tax1 + tax2;
+  const net = gross - totalFee - totalTax;
+  const pct = amt1 ? (net / amt1 * 100) : 0;
+  const dirClass = net > 0 ? 'up' : net < 0 ? 'down' : 'flat';
+  const arrow = net > 0 ? '▲' : net < 0 ? '▼' : '—';
+
+  $('resultCard').style.display = 'block';
+  $('resultLabel').textContent = resultLabel;
+  $('resultNum').className = 'num ' + dirClass;
+  $('resultNum').textContent = (net >= 0 ? '+' : '') + fmt(net) + ' 元';
+  $('resultPct').className = 'pct ' + dirClass;
+  $('resultPct').textContent = amt1 ? `${arrow} ${Math.abs(pct).toFixed(2)}%` : '';
+  $('grossLabel').textContent = grossLabel;
+  $('grossVal').textContent = (gross >= 0 ? '+' : '') + fmt(gross) + ' 元';
+  $('feeVal').textContent = fmt(totalFee) + ' 元';
+  $('taxVal').textContent = fmt(totalTax) + ' 元';
+  $('netLabel').textContent = netLabel;
+  $('netVal').textContent = (net >= 0 ? '+' : '') + fmt(net) + ' 元';
+  $('resultCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+});
+</script>
+</body>
+</html>
