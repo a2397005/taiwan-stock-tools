@@ -194,15 +194,15 @@
       </div>
       <div class="two-col">
         <div class="field">
-          <label id="amt1Label">買進金額（總額）</label>
+          <label id="amt1Label">買進價格（每股）</label>
           <input type="number" id="amt1" placeholder="0" min="0" step="0.01">
         </div>
         <div class="field">
-          <label id="amt2Label">賣出金額（總額）</label>
+          <label id="amt2Label">賣出價格（每股）</label>
           <input type="number" id="amt2" placeholder="0" min="0" step="0.01">
         </div>
       </div>
-      <div class="disclaim">金額請填「總額」（股數 × 單價），不是每股價格。</div>
+      <div class="disclaim">請填「每股價格」，系統會自動乘上股數算出總金額（股數 × 單價）。</div>
     </div>
 
     <div class="card">
@@ -236,6 +236,8 @@
         <div class="num" id="resultNum">—</div>
         <div class="pct" id="resultPct"></div>
       </div>
+      <div class="kv"><div class="k">金額一總額（單價 × 股數）</div><div class="v" id="totalAmt1Val">—</div></div>
+      <div class="kv"><div class="k">金額二總額（單價 × 股數）</div><div class="v" id="totalAmt2Val">—</div></div>
       <div class="kv"><div class="k" id="grossLabel">價差（未扣費用）</div><div class="v" id="grossVal">—</div></div>
       <div class="kv"><div class="k">手續費合計</div><div class="v" id="feeVal">—</div></div>
       <div class="kv"><div class="k">證交稅合計</div><div class="v" id="taxVal">—</div></div>
@@ -481,12 +483,12 @@ function setCalcMode(m){
   $('modeSellSell').classList.toggle('active', m === 'sellsell');
   if(m === 'buysell'){
     $('inputHeading').textContent = '輸入資料（買進 → 賣出）';
-    $('amt1Label').textContent = '買進金額（總額）';
-    $('amt2Label').textContent = '賣出金額（總額）';
+    $('amt1Label').textContent = '買進價格（每股）';
+    $('amt2Label').textContent = '賣出價格（每股）';
   } else {
     $('inputHeading').textContent = '輸入資料（兩筆賣出）';
-    $('amt1Label').textContent = '賣出金額一（總額）';
-    $('amt2Label').textContent = '賣出金額二（總額）';
+    $('amt1Label').textContent = '賣出價格一（每股）';
+    $('amt2Label').textContent = '賣出價格二（每股）';
   }
   $('resultCard').style.display = 'none';
 }
@@ -513,8 +515,17 @@ function calcTax(amount, on){
 function fmt(n){ return n.toLocaleString('zh-TW', {maximumFractionDigits:0}); }
 
 $('calcBtn').addEventListener('click', () => {
-  const amt1 = parseFloat($('amt1').value) || 0;
-  const amt2 = parseFloat($('amt2').value) || 0;
+  const shares = parseFloat($('shares').value) || 0;
+  const price1 = parseFloat($('amt1').value) || 0;
+  const price2 = parseFloat($('amt2').value) || 0;
+  if(!shares){
+    $('shares').focus();
+    $('shares').style.outline = '2px solid var(--up)';
+    setTimeout(() => { $('shares').style.outline = ''; }, 1500);
+    return;
+  }
+  const amt1 = price1 * shares;
+  const amt2 = price2 * shares;
   const feeOn = $('feeToggle').checked;
   const taxOn = $('taxToggle').checked;
   let fee1, fee2, tax1, tax2, gross, netLabel, resultLabel, grossLabel;
@@ -548,6 +559,8 @@ $('calcBtn').addEventListener('click', () => {
   $('resultNum').textContent = (net >= 0 ? '+' : '') + fmt(net) + ' 元';
   $('resultPct').className = 'pct ' + dirClass;
   $('resultPct').textContent = amt1 ? `${arrow} ${Math.abs(pct).toFixed(2)}%` : '';
+  $('totalAmt1Val').textContent = fmt(amt1) + ' 元';
+  $('totalAmt2Val').textContent = fmt(amt2) + ' 元';
   $('grossLabel').textContent = grossLabel;
   $('grossVal').textContent = (gross >= 0 ? '+' : '') + fmt(gross) + ' 元';
   $('feeVal').textContent = fmt(totalFee) + ' 元';
