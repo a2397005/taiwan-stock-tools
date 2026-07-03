@@ -183,7 +183,7 @@
 
     <div class="mode-toggle">
       <button id="modeBuySell" class="active">買進 → 賣出</button>
-      <button id="modeSellSell">賣出 → 賣出</button>
+      <button id="modeSellSell">價格賣出比價</button>
     </div>
 
     <div class="card">
@@ -208,14 +208,31 @@
     <div class="card">
       <h2>計算手續費 / 稅</h2>
       <div class="fee-row">
-        <div><div class="label">計算手續費</div><div class="sub">買、賣兩邊各收一次</div></div>
+        <div><div class="label">計算手續費</div><div class="sub">買、賣兩邊各收一次，可分別設定折扣</div></div>
         <label class="switch"><input type="checkbox" id="feeToggle" checked><span class="slider"></span></label>
       </div>
-      <div class="rate-input" id="feeRateRow">
-        <input type="number" id="feeRate" value="0.1425" step="0.0001" min="0">
-        <span>% 手續費率　最低</span>
-        <input type="number" id="feeMin" value="20" step="1" min="0">
-        <span>元／筆</span>
+      <div id="feeRateRow">
+        <div class="rate-input">
+          <input type="number" id="feeRate" value="0.1425" step="0.0001" min="0">
+          <span>% 手續費牌告費率</span>
+        </div>
+        <div class="two-col" id="discountGrid" style="margin-top:12px;">
+          <div class="field" id="discount1Wrap">
+            <label id="discount1Label">買進手續費折扣</label>
+            <div class="rate-input" style="margin-top:0;">
+              <input type="number" id="discount1" value="6" step="0.1" min="0" max="100">
+              <span>折（填 6＝6折＝0.6，88＝88折＝0.88）</span>
+            </div>
+          </div>
+          <div class="field" id="discount2Wrap">
+            <label id="discount2Label">賣出手續費折扣</label>
+            <div class="rate-input" style="margin-top:0;">
+              <input type="number" id="discount2" value="6" step="0.1" min="0" max="100">
+              <span>折</span>
+            </div>
+          </div>
+        </div>
+        <div class="disclaim" id="minFeeInfo">最低手續費：股數 ≥ 1000 股為 20 元／筆；未滿 1000 股為 1 元／筆（依你填的股數自動判斷）。</div>
       </div>
       <div class="fee-row" style="margin-top:14px;">
         <div><div class="label">計算證交稅</div><div class="sub">法定稅金，僅在「賣出」時收取</div></div>
@@ -485,15 +502,29 @@ function setCalcMode(m){
     $('inputHeading').textContent = '輸入資料（買進 → 賣出）';
     $('amt1Label').textContent = '買進價格（每股）';
     $('amt2Label').textContent = '賣出價格（每股）';
+    $('discount1Label').textContent = '買進手續費折扣';
+    $('discount2Label').textContent = '賣出手續費折扣';
+    $('discount2Wrap').style.display = '';
+    $('discountGrid').style.gridTemplateColumns = '1fr 1fr';
   } else {
-    $('inputHeading').textContent = '輸入資料（兩筆賣出）';
+    $('inputHeading').textContent = '輸入資料（兩筆賣出比價）';
     $('amt1Label').textContent = '賣出價格一（每股）';
     $('amt2Label').textContent = '賣出價格二（每股）';
+    $('discount1Label').textContent = '手續費折扣（兩筆共用）';
+    $('discount2Wrap').style.display = 'none';
+    $('discountGrid').style.gridTemplateColumns = '1fr';
   }
   $('resultCard').style.display = 'none';
 }
 $('modeBuySell').addEventListener('click', () => setCalcMode('buysell'));
 $('modeSellSell').addEventListener('click', () => setCalcMode('sellsell'));
+$('shares').addEventListener('input', () => {
+  const s = parseFloat($('shares').value) || 0;
+  const min = s >= 1000 ? 20 : 1;
+  $('minFeeInfo').textContent = s > 0
+    ? `目前 ${s} 股 → 適用最低手續費 ${min} 元／筆（≥1000股為20元，未滿1000股為1元）。`
+    : '最低手續費：股數 ≥ 1000 股為 20 元／筆；未滿 1000 股為 1 元／筆（依你填的股數自動判斷）。';
+});
 $('feeToggle').addEventListener('change', e => {
   $('feeRateRow').style.opacity = e.target.checked ? '1' : '.35';
   $('feeRateRow').style.pointerEvents = e.target.checked ? 'auto' : 'none';
@@ -502,15 +533,23 @@ $('taxToggle').addEventListener('change', e => {
   $('taxRateRow').style.opacity = e.target.checked ? '1' : '.35';
   $('taxRateRow').style.pointerEvents = e.target.checked ? 'auto' : 'none';
 });
-function calcFee(amount, on){
+function discountToMultiplier(v){
+  const n = parseFloat(v);
+  if(!n || n <= 0) return 1;
+  return n < 10 ? n / 10 : n / 100;
+}
+function calcFee(amount, on, discountVal, shares){
   if(!on || !amount) return 0;
-  const rate = parseFloat($('feeRate').value) || 0;
-  const min = parseFloat($('feeMin').value) || 0;
-  return Math.max(amount * rate / 100, amount > 0 ? min : 0);
+  const baseRate = parseFloat($('feeRate').value) || 0;
+  const multiplier = discountToMultiplier(discountVal);
+  const effectiveRate = baseRate * multiplier;
+  const minFee = shares >= 1000 ? 20 : 1;
+  const raw = Math.max(amount * effectiveRate / 100, amount > 0 ? minFee : 0);
+  return Math.floor(raw);
 }
 function calcTax(amount, on){
   if(!on || !amount) return 0;
-  return amount * (parseFloat($('taxRate').value) || 0) / 100;
+  return Math.floor(amount * (parseFloat($('taxRate').value) || 0) / 100);
 }
 function fmt(n){ return n.toLocaleString('zh-TW', {maximumFractionDigits:0}); }
 
@@ -531,14 +570,16 @@ $('calcBtn').addEventListener('click', () => {
   let fee1, fee2, tax1, tax2, gross, netLabel, resultLabel, grossLabel;
 
   if(calcMode === 'buysell'){
-    fee1 = calcFee(amt1, feeOn); fee2 = calcFee(amt2, feeOn);
+    fee1 = calcFee(amt1, feeOn, $('discount1').value, shares);
+    fee2 = calcFee(amt2, feeOn, $('discount2').value, shares);
     tax1 = 0; tax2 = calcTax(amt2, taxOn);
     gross = amt2 - amt1;
     grossLabel = '價差（賣出－買進，未扣費用）';
     resultLabel = '損益';
     netLabel = '淨損益（已扣手續費／證交稅）';
   } else {
-    fee1 = calcFee(amt1, feeOn); fee2 = calcFee(amt2, feeOn);
+    fee1 = calcFee(amt1, feeOn, $('discount1').value, shares);
+    fee2 = calcFee(amt2, feeOn, $('discount1').value, shares);
     tax1 = calcTax(amt1, taxOn); tax2 = calcTax(amt2, taxOn);
     gross = amt2 - amt1;
     grossLabel = '金額差（賣出二－賣出一，未扣費用）';
