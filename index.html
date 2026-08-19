@@ -190,16 +190,16 @@
       <h2 id="inputHeading">輸入資料</h2>
       <div class="field">
         <label>股數</label>
-        <input type="number" id="shares" placeholder="例如 1000" min="0" step="1">
+        <input type="number" id="shares" placeholder="例如 1000" min="0" step="1" inputmode="numeric">
       </div>
       <div class="two-col">
         <div class="field">
           <label id="amt1Label">買進價格（每股）</label>
-          <input type="number" id="amt1" placeholder="0" min="0" step="0.01">
+          <input type="number" id="amt1" placeholder="0" min="0" step="0.01" inputmode="decimal">
         </div>
         <div class="field">
           <label id="amt2Label">賣出價格（每股）</label>
-          <input type="number" id="amt2" placeholder="0" min="0" step="0.01">
+          <input type="number" id="amt2" placeholder="0" min="0" step="0.01" inputmode="decimal">
         </div>
       </div>
       <div class="disclaim">請填「每股價格」，系統會自動乘上股數算出總金額（股數 × 單價）。</div>
@@ -213,21 +213,21 @@
       </div>
       <div id="feeRateRow">
         <div class="rate-input">
-          <input type="number" id="feeRate" value="0.1425" step="0.0001" min="0">
+          <input type="number" id="feeRate" value="0.1425" step="0.0001" min="0" inputmode="decimal">
           <span>% 手續費牌告費率</span>
         </div>
         <div class="two-col" id="discountGrid" style="margin-top:12px;">
           <div class="field" id="discount1Wrap">
             <label id="discount1Label">買進手續費折扣</label>
             <div class="rate-input" style="margin-top:0;">
-              <input type="number" id="discount1" value="6" step="0.1" min="0" max="100">
+              <input type="number" id="discount1" value="6" step="0.1" min="0" max="100" inputmode="decimal">
               <span>折（填 6＝6折＝0.6，88＝88折＝0.88）</span>
             </div>
           </div>
           <div class="field" id="discount2Wrap">
             <label id="discount2Label">賣出手續費折扣</label>
             <div class="rate-input" style="margin-top:0;">
-              <input type="number" id="discount2" value="6" step="0.1" min="0" max="100">
+              <input type="number" id="discount2" value="6" step="0.1" min="0" max="100" inputmode="decimal">
               <span>折</span>
             </div>
           </div>
@@ -239,7 +239,7 @@
         <label class="switch"><input type="checkbox" id="taxToggle" checked><span class="slider"></span></label>
       </div>
       <div class="rate-input" id="taxRateRow">
-        <input type="number" id="taxRate" value="0.3" step="0.01" min="0">
+        <input type="number" id="taxRate" value="0.3" step="0.01" min="0" inputmode="decimal">
         <span>% 證交稅率（一般股票 0.3%，ETF 通常 0.1%）</span>
       </div>
     </div>
