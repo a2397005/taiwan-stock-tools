@@ -205,6 +205,23 @@
       <div class="disclaim">請填「每股價格」，系統會自動乘上股數算出總金額（股數 × 單價）。</div>
     </div>
 
+    <button class="calc-btn" id="calcBtn">計算結果</button>
+
+    <div class="card" id="resultCard" style="display:none; margin-top:14px;">
+      <h2>計算結果</h2>
+      <div class="result-hero">
+        <div class="lbl" id="resultLabel">損益</div>
+        <div class="num" id="resultNum">—</div>
+        <div class="pct" id="resultPct"></div>
+      </div>
+      <div class="kv"><div class="k">金額一總額（單價 × 股數）</div><div class="v" id="totalAmt1Val">—</div></div>
+      <div class="kv"><div class="k">金額二總額（單價 × 股數）</div><div class="v" id="totalAmt2Val">—</div></div>
+      <div class="kv"><div class="k" id="grossLabel">價差（未扣費用）</div><div class="v" id="grossVal">—</div></div>
+      <div class="kv"><div class="k">手續費合計</div><div class="v" id="feeVal">—</div></div>
+      <div class="kv"><div class="k">證交稅合計</div><div class="v" id="taxVal">—</div></div>
+      <div class="kv total"><div class="k" id="netLabel">淨損益</div><div class="v" id="netVal">—</div></div>
+    </div>
+    
     <div class="card">
       <h2>計算手續費 / 稅</h2>
       <div class="fee-row">
@@ -244,22 +261,6 @@
       </div>
     </div>
 
-    <button class="calc-btn" id="calcBtn">計算結果</button>
-
-    <div class="card" id="resultCard" style="display:none; margin-top:14px;">
-      <h2>計算結果</h2>
-      <div class="result-hero">
-        <div class="lbl" id="resultLabel">損益</div>
-        <div class="num" id="resultNum">—</div>
-        <div class="pct" id="resultPct"></div>
-      </div>
-      <div class="kv"><div class="k">金額一總額（單價 × 股數）</div><div class="v" id="totalAmt1Val">—</div></div>
-      <div class="kv"><div class="k">金額二總額（單價 × 股數）</div><div class="v" id="totalAmt2Val">—</div></div>
-      <div class="kv"><div class="k" id="grossLabel">價差（未扣費用）</div><div class="v" id="grossVal">—</div></div>
-      <div class="kv"><div class="k">手續費合計</div><div class="v" id="feeVal">—</div></div>
-      <div class="kv"><div class="k">證交稅合計</div><div class="v" id="taxVal">—</div></div>
-      <div class="kv total"><div class="k" id="netLabel">淨損益</div><div class="v" id="netVal">—</div></div>
-    </div>
     <footer>稅費率僅供試算參考，實際手續費依券商牌告與折扣為準。</footer>
   </div>
 
