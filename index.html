@@ -559,7 +559,7 @@ $('calcBtn').addEventListener('click', () => {
   const price1 = parseFloat($('amt1').value) || 0;
   const price2 = parseFloat($('amt2').value) || 0;
   if(!shares){
-    $('shares').focus();
+    // $('shares').focus();
     $('shares').style.outline = '2px solid var(--up)';
     setTimeout(() => { $('shares').style.outline = ''; }, 1500);
     return;
